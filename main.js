@@ -31,8 +31,11 @@ function sendJSON(response, body) {
 }
 
 methods.set('/posts.get', function ({ response }) {
-  sendJSON(response, posts);
+  // Filter out removed posts
+  const activePosts = posts.filter(post => !post.removed);
+  sendJSON(response, activePosts);
 });
+
 methods.set('/posts.getById', function ({ response, searchParams }) {
   const idString = searchParams.get('id');
 
@@ -42,7 +45,7 @@ methods.set('/posts.getById', function ({ response, searchParams }) {
   }
 
   const id = Number(idString);
-  const findPost = posts.find((el) => el.id === id);
+  const findPost = posts.find((el) => el.id === id && !el.removed);
 
   if (findPost) {
     sendJSON(response, findPost);
@@ -63,6 +66,7 @@ methods.set('/posts.post', function ({ response, searchParams }) {
     id: nextId++,
     content: content,
     created: Date.now(),
+    removed: false, // Newly created posts are not removed
   };
 
   posts.unshift(post);
@@ -79,13 +83,13 @@ methods.set('/posts.edit', function ({ response, searchParams }) {
   }
 
   const id = Number(idString);
-  const findIndex = posts.findIndex((el) => el.id === id);
+  const findPost = posts.find((el) => el.id === id && !el.removed);
 
-  if (findIndex !== -1) {
+  if (findPost) {
     if (searchParams.has('content')) {
       const content = searchParams.get('content');
-      posts[findIndex].content = content;
-      sendJSON(response, posts[findIndex]);
+      findPost.content = content;
+      sendJSON(response, findPost);
     } else {
       sendResponse(response, { status: statusBadRequest });
     }
@@ -103,11 +107,11 @@ methods.set('/posts.delete', function ({ response, searchParams }) {
   }
 
   const id = Number(idString);
-  const findIndex = posts.findIndex((el) => el.id === id);
+  const findPost = posts.find((el) => el.id === id && !el.removed);
 
-  if (findIndex !== -1) {
-    const deletedPost = posts.splice(findIndex, 1);
-    sendJSON(response, deletedPost[0]);
+  if (findPost) {
+    findPost.removed = true; // Mark the post as removed
+    sendJSON(response, findPost);
   } else {
     sendResponse(response, { status: statusNotFound });
   }
