@@ -10,22 +10,20 @@ let nextId = 1;
 const posts = [];
 
 const methods = new Map();
-methods.set("/posts.get", function (request, response) {
+methods.set("/posts.get", function ({ response }) {
   response.writeHead(statusOk, { "Content-type": "aplication/json" });
   response.end(JSON.stringify(posts));
 });
 methods.set("/posts.getById", function (request, response) {});
-methods.set("/posts.post", function (request, response) {
-  const url = new URL(request.url, `http://${request.headers.host}`);
-  const searchparams = url.searchParams;
+methods.set("/posts.post", function (response, searchParams) {
 
-  if (!searchparams.has("content")) {
+  if (!searchParams.has("content")) {
     response.writeHead(statusBadRequest);
     response.end();
     return;
   }
 
-  const content = searchparams.get("content");
+  const content = searchParams.get("content");
 
   const post = {
     id: nextId++,
@@ -36,14 +34,16 @@ methods.set("/posts.post", function (request, response) {
   posts.unshift(post);
 
   response.writeHead(statusOk, { "Content-type": "aplication/json" });
-  response.end(JSON.stringify(post))
+  response.end(JSON.stringify(post));
 });
 methods.set("/posts.edit", function (request, response) {});
 methods.set("/posts.delete", function (request, response) {});
 
 const server = http.createServer(function (request, response) {
-  const url = new URL(request.url, `http://${request.headers.host}`);
-  const pathname = url.pathname;
+  const { pathname, searchParams } = new URL(
+    request.url,
+    `http://${request.headers.host}`
+  );
 
   const method = methods.get(pathname);
   if (method === undefined) {
@@ -51,7 +51,15 @@ const server = http.createServer(function (request, response) {
     response.end();
     return;
   }
-  method(request, response);
+
+  const params = {
+    request,
+    response,
+    pathname,
+    searchParams,
+  };
+
+  method(params);
 });
 
 server.listen(port);
