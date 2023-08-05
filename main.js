@@ -117,6 +117,28 @@ methods.set('/posts.delete', function ({ response, searchParams }) {
   }
 });
 
+methods.set('/posts.restore', function ({ response, searchParams }) {
+  const idString = searchParams.get('id');
+
+  if (!idString || isNaN(Number(idString))) {
+    sendResponse(response, { status: statusBadRequest });
+    return;
+  }
+
+  const id = Number(idString);
+  const findPost = posts.find((el) => el.id === id && el.removed);
+
+  if (findPost) {
+    findPost.removed = false; // Restore the post
+    sendJSON(response, findPost);
+  } else if (posts.some((el) => el.id === id && !el.removed)) {
+    sendResponse(response, { status: statusBadRequest }); // Attempt to restore an active (non-removed) post
+  } else {
+    sendResponse(response, { status: statusNotFound }); // Post not found
+  }
+});
+
+
 const server = http.createServer(function (request, response) {
   const { pathname, searchParams } = new URL(
     request.url,
