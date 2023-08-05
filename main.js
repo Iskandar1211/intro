@@ -69,7 +69,8 @@ methods.set('/posts.post', function ({ response, searchParams }) {
 
   sendJSON(response, post);
 });
-methods.set('/posts.edit/:id', function ({ response, searchParams }) {
+
+methods.set('/posts.edit', function ({ response, searchParams }) {
   const idString = searchParams.get('id');
 
   if (!idString || isNaN(Number(idString))) {
@@ -93,7 +94,7 @@ methods.set('/posts.edit/:id', function ({ response, searchParams }) {
   }
 });
 
-methods.set('/posts.delete/:id', function ({ response, searchParams }) {
+methods.set('/posts.delete', function ({ response, searchParams }) {
   const idString = searchParams.get('id');
 
   if (!idString || isNaN(Number(idString))) {
